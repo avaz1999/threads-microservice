@@ -57,8 +57,8 @@ class PostController(
         return service.getAllPostByUserId(userId, pageNumber, pageSize)
     }
 
-    @GetMapping("my-posts/{userId}")
-    fun getMyPosts(
+    @GetMapping("users/posts/{userId}")
+    fun getUserPosts(
         @PathVariable userId: Long,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "5") size: Int,

@@ -28,7 +28,7 @@ interface UserService {
 
 interface PostService {
     fun create(dto: PostCreateDto)
-    fun getById(id: Long): PostDto
+    fun getById(id: Long): GetOnePost
     fun getAllPostByUserId(userId: Long, pageNumber: Int, pageSize: Int): Page<PostDto>
     fun getMyPosts(userId: Long, pageNumber: Int, pageSize: Int): Page<PostDto>
     fun postLike(userId: Long, postId: Long)
@@ -50,10 +50,11 @@ class PostServiceImpl(
         postRepository.save(dto.toEntity())
     }
 
-    override fun getById(id: Long): PostDto {
+    override fun getById(id: Long): GetOnePost {
         val post = postRepository.findByIdAndDeletedFalse(id) ?: throw PostNotFoundException()
+        val likePosts = postLikeRepository.countAllByPostIdAndDeletedFalse(id)
         val user = userService.getUserById(post.userId)
-        return PostDto.toDto(post, user)
+        return GetOnePost.toDto(post, user,likePosts)
     }
 
     @Transactional

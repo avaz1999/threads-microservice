@@ -1,7 +1,6 @@
 package uz.demo.post
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import java.math.BigDecimal
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class BaseMessage(var code: Int? = null, var message: String? = null)
@@ -21,6 +20,18 @@ data class PostDto(
     companion object {
         fun toDto(post: Post, user: UserDto) = post.run {
             PostDto(user,description)
+        }
+    }
+}
+data class GetOnePost(
+    val id:Long,
+    val user: UserDto,
+    val description: String,
+    val likes: Long,
+) {
+    companion object {
+        fun toDto(post: Post, user: UserDto, likePosts: Long?) = post.run {
+            GetOnePost(id!!,user,description,likePosts!!)
         }
     }
 }
