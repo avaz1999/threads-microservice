@@ -74,32 +74,10 @@ class PostServiceImpl(
                 }
             }
         }
-//        val emptyPage: Page<Post> = PageImpl(emptyList(), PageRequest.of(pageNumber, pageSize), 0)
-//        return emptyPage.map { PostDto.toDto(it, user) }
+
         val allFollowersPosts = postRepository.findAllFollowersPosts(subscribe.followerList, pageRequest)
         return allFollowersPosts.map { PostDto.toDto(it, user) }
     }
-//    @Transactional
-//    override fun getAllPostByUserId(userId: Long, pageNumber: Int, pageSize: Int): Page<PostDto> {
-//        if (!userService.existById(userId)) {
-//            throw UserNotFoundException()
-//        }
-//
-//        val sharePostForUser = mutableListOf<Post>()
-//        val user = userService.getUserById(userId)
-//        val pageRequest = PageRequest.of(pageNumber, pageSize)
-//
-//        postRepository.findAllFollowersPosts(userService.getSubscribesByUserId(userId).followerList!!, pageRequest)
-//            .forEach { followerPost ->
-//                val followerUser = userService.getUserById(followerPost.userId)
-//                if (!readPostRepository.existsByUserIdAndPostIdAndDeletedFalse(userId, followerPost.id)) {
-//                    sharePostForUser.add(followerPost)
-//                    readPostRepository.save(PostRead(userId, followerPost.id!!))
-//                }
-//            }
-//
-//        return sharePostForUser.map { PostDto.toDto(it, user) }.toPage(pageRequest)
-//    }
 
     override fun getMyPosts(userId: Long, pageNumber: Int, pageSize: Int): Page<PostDto> {
         val of = PageRequest.of(pageNumber, pageSize)
