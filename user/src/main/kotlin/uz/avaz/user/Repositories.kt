@@ -1,7 +1,6 @@
 package uz.avaz.user
 
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
@@ -48,7 +47,15 @@ class BaseRepositoryImpl<T : BaseEntity>(
 interface UserRepository : BaseRepository<User> {
     fun existsByIdAndDeletedFalse(id: Long): Boolean
     fun existsByUsername(username: String): Boolean
-    @Query(nativeQuery = true, value = "SELECT * FROM d_user. users u where u.id in :followingList and deleted = false ")
-    fun findUserByFollowingIds(@Param("followingList") followingList: Set<Long>,pageable: Pageable):Page<User>
+    fun findByUsernameAndDeletedFalse(userName: String): User?
+    @Query(
+        nativeQuery = true,
+        value = "SELECT * FROM d_user. users u where u.id in :followingList and deleted = false "
+    )
+    fun findUserByFollowingIds(@Param("followingList") followingList: Set<Long>, pageable: Pageable): Page<User>
+}
+
+interface RoleRepository : BaseRepository<Role> {
+    fun findByNameAndDeletedFalse(name: UserRole): Role?
 
 }

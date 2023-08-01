@@ -39,39 +39,39 @@ class UserController(private val service: UserService) {
     @PostMapping
     fun create(@RequestBody dto: UserDto) = service.create(dto)
 
-    @GetMapping("{id}")
-    fun getById(@PathVariable id: Long) = service.getById(id)
+    @GetMapping
+    fun getById() = service.getById()
 
-    @GetMapping("following/{id}")
+    @GetMapping("following/")
     fun getFollowing(
-        @PathVariable id: Long,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "5") size: Int
     ): List<GetOneUserDto> {
         val pageNumber = if (page < 0) 0 else page
         val pageSize = if (size < 0) 0 else size
-        return service.getFollowing(id, pageNumber, pageSize).content
+        return service.getFollowing( pageNumber, pageSize).content
     }
 
-    @GetMapping("followers/{id}")
+    @GetMapping("followers/")
     fun getFollowers(
-        @PathVariable id: Long,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "5") size: Int
     ): List<GetOneUserDto> {
         val pageNumber = if (page < 0) 0 else page
         val pageSize = if (size < 0) 0 else size
-        return service.getFollowers(id, pageNumber, pageSize).content
+        return service.getFollowers( pageNumber, pageSize).content
     }
 
-    @GetMapping("count-following/{id}")
-    fun countFollowing(@PathVariable id: Long) = service.countFollowing(id)
+    @GetMapping("count-following/")
+    fun countFollowing() = service.countFollowing()
 
-    @GetMapping("count-followers/{id}")
-    fun countFollowers(@PathVariable id: Long) = service.countFollowers(id)
+    @GetMapping("count-followers/")
+    fun countFollowers() = service.countFollowers()
 
-    @DeleteMapping("{id}")
-    fun delete(@PathVariable id:Long) = service.delete(id)
+    @DeleteMapping()
+    fun delete() = service.delete()
+    @GetMapping("find")
+    fun findUser(username: String) = service.findByUsername(username)
 }
 
 
@@ -79,9 +79,9 @@ class UserController(private val service: UserService) {
 @RequestMapping("internal")
 
 class UserInternalController(private val service: UserService) {
-    @GetMapping("exists/{id}")
-    fun existsById(@PathVariable id: Long) = service.existById(id)
+    @GetMapping("exists")
+    fun existsById() = service.existById()
 
     @GetMapping("subscribes/{userId}")
-    fun getSubscribes(@PathVariable userId:Long) = service.getSubscribes(userId)
+    fun getSubscribes(@PathVariable userId:Long) = service.getSubscribes()
 }

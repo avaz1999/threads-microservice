@@ -7,21 +7,23 @@ import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import javax.management.relation.RoleNotFoundException
 import javax.transaction.Transactional
 
 interface UserService {
     fun create(dto: UserDto)
-    fun getById(id: Long): GetOneUserDto
-    fun existById(id: Long): Boolean
+    fun getById(): GetOneUserDto
+    fun existById(): Boolean
     fun isSecurePassword(password: String): Boolean
     fun checkPhoneNumber(phoneNumber: String): Boolean
     fun isValidEmail(email: String): Boolean
-    fun getFollowing(id: Long, pageNumber: Int, pageSize: Int): Page<GetOneUserDto>
-    fun getFollowers(id: Long, pageNumber: Int, pageSize: Int): Page<GetOneUserDto>
-    fun countFollowing(id: Long): Long
-    fun countFollowers(id: Long): Long
-    fun getSubscribes(id: Long):SubscribeDto
-    fun delete(id: Long)
+    fun getFollowing( pageNumber: Int, pageSize: Int): Page<GetOneUserDto>
+    fun getFollowers( pageNumber: Int, pageSize: Int): Page<GetOneUserDto>
+    fun countFollowing(): Long
+    fun countFollowers(): Long
+    fun getSubscribes(): SubscribeDto
+    fun delete()
+    fun findByUsername(username: String): UserAuthDto
 }
 
 @FeignClient(name = "subscribe")
@@ -38,64 +40,72 @@ interface PostService {
     @GetMapping("internal/{userId}")
     fun getByUserIdAndFollowerId(@PathVariable userId: Long): List<PostDto>
 }
+
 @Service
 class UserServiceImpl(
     private val userRepository: UserRepository,
     private val subscribeService: SubscribeService,
-    private val postService: PostService
+    private val postService: PostService,
+    private val roleRepository: RoleRepository
 ) : UserService {
     @Transactional
     override fun create(dto: UserDto) {
         val username: String = dto.username
         if (userRepository.existsByUsername(username)) throw ExistsUsernameException()
+        val role = roleRepository.findByIdAndDeletedFalse(dto.roleId) ?: throw RoleNotFoundException()
         if (!isSecurePassword(dto.password)) throw PasswordErrorException()
         if (!checkPhoneNumber(dto.phoneNumber)) throw PhoneNumberException()
         if (!isValidEmail(dto.email)) throw EmailErrorException()
-        val user = userRepository.save(dto.toEntity())
-        subscribeService.createSubscribe(user.id!!)
+        userRepository.save(dto.toEntity(role))
+//        subscribeService.createSubscribe(userId())
     }
 
-    override fun getById(id: Long) = userRepository.findByIdAndDeletedFalse(id)?.run { GetOneUserDto.toDto(this) }
+    override fun getById() = userRepository.findByIdAndDeletedFalse(userId())?.run { GetOneUserDto.toDto(this) }
         ?: throw UserNotFoundException()
 
-    override fun existById(id: Long): Boolean {
-        return userRepository.existsByIdAndDeletedFalse(id)
+    override fun existById(): Boolean {
+        return userRepository.existsByIdAndDeletedFalse(userId())
     }
 
-    override fun getFollowing(id: Long, pageNumber: Int, pageSize: Int): Page<GetOneUserDto> {
-        val subscribe = subscribeService.getByUserId(id)
+    override fun findByUsername(username: String): UserAuthDto {
+        return userRepository.findByUsernameAndDeletedFalse(username)?.run { UserAuthDto.toDto(this) }
+            ?: throw UserNotFoundException()
+    }
+
+    override fun getFollowing( pageNumber: Int, pageSize: Int): Page<GetOneUserDto> {
+        val subscribe = subscribeService.getByUserId(userId())
         val followingList = subscribe.followingList ?: emptySet()
         val pageRequest = PageRequest.of(pageNumber, pageSize)
         return userRepository.findUserByFollowingIds(followingList, pageRequest).map { GetOneUserDto.toDto(it) }
     }
 
-    override fun getFollowers(id: Long, pageNumber: Int, pageSize: Int): Page<GetOneUserDto> {
-        val subscribe = subscribeService.getByUserId(id)
+    override fun getFollowers( pageNumber: Int, pageSize: Int): Page<GetOneUserDto> {
+        val subscribe = subscribeService.getByUserId(userId())
         val followingList = subscribe.followerList ?: emptySet()
         val pageRequest = PageRequest.of(pageNumber, pageSize)
         return userRepository.findUserByFollowingIds(followingList, pageRequest).map { GetOneUserDto.toDto(it) }
     }
 
-    override fun countFollowing(id: Long): Long {
-        val subscribe = subscribeService.getByUserId(id)
+    override fun countFollowing(): Long {
+        val subscribe = subscribeService.getByUserId(userId())
         val followingList = subscribe.followingList ?: emptySet()
         return followingList.size.toLong()
     }
 
-    override fun countFollowers(id: Long): Long {
-        val subscribe = subscribeService.getByUserId(id)
+    override fun countFollowers(): Long {
+        val subscribe = subscribeService.getByUserId(userId())
         val followers = subscribe.followerList ?: emptySet()
         return followers.size.toLong()
     }
 
-    override fun getSubscribes(id: Long): SubscribeDto {
-        if (!userRepository.existsByIdAndDeletedFalse(id)) throw UserNotFoundException()
-        return subscribeService.getByUserId(id)
+    override fun getSubscribes(): SubscribeDto {
+        if (!userRepository.existsByIdAndDeletedFalse(userId())) throw UserNotFoundException()
+        return subscribeService.getByUserId(userId())
     }
 
-    override fun delete(id: Long) {
-        if (!userRepository.existsByIdAndDeletedFalse(id)) throw UserNotFoundException()
-        val user = userRepository.findByIdAndDeletedFalse(id)
+    override fun delete() {
+        if (!userRepository.existsByIdAndDeletedFalse(userId())) throw UserNotFoundException()
+        val user = userRepository.findByIdAndDeletedFalse(userId())
         user!!.deleted = true
         userRepository.save(user)
     }

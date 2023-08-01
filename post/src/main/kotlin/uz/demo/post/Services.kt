@@ -36,7 +36,6 @@ interface PostService {
 
 }
 
-@Suppress("ALWAYS_NULL")
 @Service
 class PostServiceImpl(
     private val postRepository: PostRepository,
@@ -54,7 +53,7 @@ class PostServiceImpl(
         val post = postRepository.findByIdAndDeletedFalse(id) ?: throw PostNotFoundException()
         val likePosts = postLikeRepository.countAllByPostIdAndDeletedFalse(id)
         val user = userService.getUserById(post.userId)
-        return GetOnePost.toDto(post, user,likePosts)
+        return GetOnePost.toDto(post, user, likePosts)
     }
 
     @Transactional
@@ -89,14 +88,19 @@ class PostServiceImpl(
     override fun postLike(userId: Long, postId: Long) {
         if (!userService.existById(userId)) throw UserNotFoundException()
         if (!postRepository.existsById(postId)) throw PostNotFoundException()
-        val postLike = postLikeRepository.findByUserIdAndPostIdAndDeletedFalse(userId, postId)
+        val postLike = postLikeRepository.findByUserIdAndPostId(userId, postId)
         if (postLike == null) {
             postLikeRepository.save(PostLike(userId, postId))
         } else if (postLike.postId != postId && postLike.userId != userId)
             postLikeRepository.save(PostLike(userId, postId))
         else {
-            postLike.deleted = true
-            postLikeRepository.save(postLike)
+            if (postLike.deleted) {
+                postLike.deleted = false
+                postLikeRepository.save(postLike)
+            }else{
+                postLike.deleted = true
+                postLikeRepository.save(postLike)
+            }
         }
     }
 

@@ -3,6 +3,8 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
       <module name="order" target="11" />
+      <module name="order.main" target="11" />
+      <module name="order.test" target="11" />
       <module name="uz.demo.order" target="11" />
       <module name="uz.demo.order.main" target="11" />
       <module name="uz.demo.order.test" target="11" />

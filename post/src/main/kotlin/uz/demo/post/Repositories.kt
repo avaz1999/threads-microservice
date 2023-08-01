@@ -68,7 +68,7 @@ interface PostReadRepository : BaseRepository<PostRead> {
 }
 
 interface PostLikeRepository : BaseRepository<PostLike> {
-    fun findByUserIdAndPostIdAndDeletedFalse(userId: Long, postId: Long): PostLike?
+    fun findByUserIdAndPostId(userId: Long, postId: Long): PostLike?
     fun findAllByPostIdAndDeletedFalse(postId: Long): List<PostLike>?
     fun countAllByPostIdAndDeletedFalse(postId: Long): Long?
 }
