@@ -6,7 +6,7 @@ data class BaseMessage(var code: Int? = null, var message: String? = null)
 
 data class GetOneSubscribeDto(
     val id: Long,
-    val userId: Long,
+    var userId: Long,
     val followerList: HashSet<Long>?,
     var followingList: HashSet<Long>?
 ) {

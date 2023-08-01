@@ -8,13 +8,13 @@ import org.springframework.web.bind.annotation.PathVariable
 import javax.transaction.Transactional
 
 interface SubscribeService {
-    fun follow(followerId: Long, followId: Long)
-    fun unFollow(followerId: Long, followId: Long)
+    fun follow( followId: Long)
+    fun unFollow( followId: Long)
     fun create(id: Long)
-    fun getFollowingByUserId(userId: Long): GetOneSubscribeDto
+    fun getFollowingByUserId(userId:Long): GetOneSubscribeDto
 }
 
-@FeignClient(name = "user")
+@FeignClient(name = "user", configuration = [Auth2TokenConfiguration::class])
 interface UserService {
     @GetMapping("internal/exists/{id}")
     fun existsById(@PathVariable id: Long): Boolean
@@ -26,42 +26,34 @@ class SubscribeServiceImpl(
     private val userService: UserService
 ) : SubscribeService {
     @Transactional
-    override fun follow(followerId: Long, followId: Long) {
-        if (!userService.existsById(followerId)) throw FollowerNotFoundException()
+    override fun follow(followId: Long) {
         if (!userService.existsById(followId)) throw FollowNotFoundException()
 
-        val followerExists = subscribeRepository.existsByUserIdAndDeletedFalse(followerId)
+
         val followExists = subscribeRepository.existsByUserIdAndDeletedFalse(followId)
 
-        if (!followerExists && !followExists) {
+        if (!followExists && userId() != followId) {
             val followingList = hashSetOf(followId)
-            val followerList = hashSetOf(followerId)
-            subscribeRepository.save(Subscribe(followerId, hashSetOf(), followingList))
+            val followerList = hashSetOf(userId())
+            subscribeRepository.save(Subscribe(userId(), hashSetOf(), followingList))
             subscribeRepository.save(Subscribe(followId, followerList, hashSetOf()))
-        } else if (!followerExists) {
-            val followingList = hashSetOf(followId)
-            subscribeRepository.save(Subscribe(followerId, hashSetOf(), followingList))
-
-            val following = subscribeRepository.findByUserIdAndDeletedFalse(followId)
-            following.followerList?.add(followerId)
-            subscribeRepository.save(following)
         } else if (!followExists) {
-            val followerList = hashSetOf(followerId)
+            val followerList = hashSetOf(followId)
             subscribeRepository.save(Subscribe(followId, followerList, hashSetOf()))
 
-            val follower = subscribeRepository.findByUserIdAndDeletedFalse(followerId)
+            val follower = subscribeRepository.findByUserIdAndDeletedFalse(userId())
             follower.followingList?.add(followId)
             subscribeRepository.save(follower)
         } else {
-            val getFollower = subscribeRepository.findByUserIdAndDeletedFalse(followerId)
+            val getFollower = subscribeRepository.findByUserIdAndDeletedFalse(userId())
             val getFollowing = subscribeRepository.findByUserIdAndDeletedFalse(followId)
             if (getFollower.followingList!!.contains(getFollowing.userId) ||
-                getFollowing.followerList!!.contains(getFollower.userId) ||
-                followerId == followId
+                getFollowing.followerList!!.contains(userId()) ||
+                userId() == followId
             ) throw NotFollowException()
             else {
-                getFollower.followingList!!.add(getFollowing.userId)
-                getFollowing.followerList!!.add(getFollower.userId)
+                getFollower.followingList!!.add(followId)
+                getFollowing.followerList!!.add(userId())
                 subscribeRepository.save(getFollower)
                 subscribeRepository.save(getFollowing)
             }
@@ -69,19 +61,18 @@ class SubscribeServiceImpl(
     }
 
     @Transactional
-    override fun unFollow(followerId: Long, followId: Long) {
-        if (!userService.existsById(followerId)) throw FollowerNotFoundException()
+    override fun unFollow(followId: Long) {
         if (!userService.existsById(followId)) throw FollowNotFoundException()
 
-        val followerExists = subscribeRepository.existsByUserIdAndDeletedFalse(followerId)
+
         val followExists = subscribeRepository.existsByUserIdAndDeletedFalse(followId)
 
-        if (followerExists && followExists && followerId != followId){
-            val getFollower = subscribeRepository.findByUserIdAndDeletedFalse(followerId)
+        if (  followExists && userId() != followId){
+            val getFollower = subscribeRepository.findByUserIdAndDeletedFalse(userId())
             val getFollowing = subscribeRepository.findByUserIdAndDeletedFalse(followId)
 
             getFollower.followingList?.remove(followId)
-            getFollowing.followerList?.remove(followerId)
+            getFollowing.followerList?.remove(userId())
 
             subscribeRepository.save(getFollower)
             subscribeRepository.save(getFollowing)
@@ -93,9 +84,7 @@ class SubscribeServiceImpl(
         subscribeRepository.save(Subscribe(id, hashSetOf(), hashSetOf()))
     }
 
-    override fun getFollowingByUserId(userId: Long)=subscribeRepository.findByUserIdAndDeletedFalse(userId).run {
+    override fun getFollowingByUserId(userId: Long) =subscribeRepository.findByUserIdAndDeletedFalse(userId).run {
         GetOneSubscribeDto.toDto(this)
     }
-
-
 }

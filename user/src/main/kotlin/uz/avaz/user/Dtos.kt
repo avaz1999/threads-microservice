@@ -19,10 +19,11 @@ data class GetOneUserDto(
     val id: Long?,
     val fullName: String,
     val username: String,
+    val phoneNumber: String,
     val bio: String,
 ) {
     companion object {
-        fun toDto(user: User) = user.run { GetOneUserDto(id, fullName, username, bio!!) }
+        fun toDto(user: User) = user.run { GetOneUserDto(id, fullName, username,phoneNumber, bio!!) }
     }
 }
 

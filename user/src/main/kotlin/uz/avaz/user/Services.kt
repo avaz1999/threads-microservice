@@ -13,7 +13,7 @@ import javax.transaction.Transactional
 interface UserService {
     fun create(dto: UserDto)
     fun getById(): GetOneUserDto
-    fun existById(): Boolean
+    fun existById(followId:Long): Boolean
     fun isSecurePassword(password: String): Boolean
     fun checkPhoneNumber(phoneNumber: String): Boolean
     fun isValidEmail(email: String): Boolean
@@ -26,7 +26,7 @@ interface UserService {
     fun findByUsername(username: String): UserAuthDto
 }
 
-@FeignClient(name = "subscribe")
+@FeignClient(name = "subscribe", configuration = [Auth2TokenConfiguration::class])
 interface SubscribeService {
     @PostMapping("internal/{id}")
     fun createSubscribe(@PathVariable id: Long)
@@ -57,14 +57,14 @@ class UserServiceImpl(
         if (!checkPhoneNumber(dto.phoneNumber)) throw PhoneNumberException()
         if (!isValidEmail(dto.email)) throw EmailErrorException()
         userRepository.save(dto.toEntity(role))
-//        subscribeService.createSubscribe(userId())
+        subscribeService.createSubscribe(userId())
     }
 
     override fun getById() = userRepository.findByIdAndDeletedFalse(userId())?.run { GetOneUserDto.toDto(this) }
         ?: throw UserNotFoundException()
 
-    override fun existById(): Boolean {
-        return userRepository.existsByIdAndDeletedFalse(userId())
+    override fun existById(followId: Long): Boolean {
+        return userRepository.existsByIdAndDeletedFalse(followId)
     }
 
     override fun findByUsername(username: String): UserAuthDto {

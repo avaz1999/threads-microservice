@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -51,11 +50,11 @@ class ExceptionHandlers(
 
 @RestController
 class SubscribeController(private val service: SubscribeService) {
-    @PostMapping("follow/{followerId}/{followId}")
-    fun create(@PathVariable followerId: Long, @PathVariable followId: Long) = service.follow(followerId, followId)
+    @PostMapping("follow/{followId}")
+    fun create( @PathVariable followId: Long) = service.follow( followId)
 
-    @PutMapping("unfollow/{followerId}/{followId}")
-    fun unfollow(@PathVariable followerId: Long,@PathVariable followId: Long) = service.unFollow(followerId, followId)
+    @PutMapping("unfollow/{followId}")
+    fun unfollow(@PathVariable followId: Long) = service.unFollow( followId)
 }
 
 @RestController

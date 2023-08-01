@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*
 
 @ControllerAdvice
 class ExceptionHandlers(
-    private val errorMessageSource: ResourceBundleMessageSource
+    private val errorMessageSource: ResourceBundleMessageSource,
 ) {
     @ExceptionHandler(UserServiceException::class)
     fun handleException(exception: UserServiceException): ResponseEntity<*> {
@@ -42,24 +42,25 @@ class UserController(private val service: UserService) {
     @GetMapping
     fun getById() = service.getById()
 
-    @GetMapping("following/")
+    @GetMapping("following")
     fun getFollowing(
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "5") size: Int
+        @RequestParam(defaultValue = "5") size: Int,
     ): List<GetOneUserDto> {
         val pageNumber = if (page < 0) 0 else page
         val pageSize = if (size < 0) 0 else size
-        return service.getFollowing( pageNumber, pageSize).content
+        return service.getFollowing(pageNumber, pageSize).content
     }
 
-    @GetMapping("followers/")
+
+    @GetMapping("followers")
     fun getFollowers(
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "5") size: Int
+        @RequestParam(defaultValue = "5") size: Int,
     ): List<GetOneUserDto> {
         val pageNumber = if (page < 0) 0 else page
         val pageSize = if (size < 0) 0 else size
-        return service.getFollowers( pageNumber, pageSize).content
+        return service.getFollowers(pageNumber, pageSize).content
     }
 
     @GetMapping("count-following/")
@@ -70,6 +71,7 @@ class UserController(private val service: UserService) {
 
     @DeleteMapping()
     fun delete() = service.delete()
+
     @GetMapping("find")
     fun findUser(username: String) = service.findByUsername(username)
 }
@@ -79,9 +81,9 @@ class UserController(private val service: UserService) {
 @RequestMapping("internal")
 
 class UserInternalController(private val service: UserService) {
-    @GetMapping("exists")
-    fun existsById() = service.existById()
+    @GetMapping("exists/{followId}")
+    fun existsById(@PathVariable followId: Long) = service.existById(followId)
 
     @GetMapping("subscribes/{userId}")
-    fun getSubscribes(@PathVariable userId:Long) = service.getSubscribes()
+    fun getSubscribes(@PathVariable userId: Long) = service.getSubscribes()
 }
